@@ -17,12 +17,14 @@ export default function Navbar() {
   const { data: session } = useSession()
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="container flex h-16 items-center justify-between">
+    <nav className="border-b border-border bg-card/50 backdrop-blur-xl sticky top-0 z-50">
+      <div className="container max-w-6xl flex h-16 items-center justify-between">
         <Link href="/dashboard" className="flex items-center space-x-2">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            LinkedIn Caption Generator
+          <div className="w-8 h-8 rounded-lg gradient-orange flex items-center justify-center">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <span className="text-lg font-semibold">
+            LinkedIn AI
           </span>
         </Link>
 
@@ -30,14 +32,16 @@ export default function Navbar() {
           {session?.user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-secondary">
+                  <Avatar className="h-10 w-10">
                     <AvatarImage src={session.user.image} alt={session.user.name} />
-                    <AvatarFallback>{session.user.name?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="bg-secondary text-foreground">
+                      {session.user.name?.charAt(0)}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 bg-card border-border">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{session.user.name}</p>
@@ -46,20 +50,20 @@ export default function Navbar() {
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                {/* <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard" className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     Dashboard
                   </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                </DropdownMenuItem> */}
+                <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem
-                  className="cursor-pointer text-red-600"
                   onClick={() => signOut({ callbackUrl: '/' })}
+                  className="cursor-pointer text-red-500 focus:text-red-500"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  Log out
+                  Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

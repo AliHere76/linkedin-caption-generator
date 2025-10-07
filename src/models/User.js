@@ -10,6 +10,10 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  password: {
+    type: String,
+    select: false, // Don't include password in queries by default
+  },
   image: {
     type: String,
   },
@@ -24,4 +28,9 @@ const UserSchema = new mongoose.Schema({
   },
 })
 
-export default mongoose.models.User || mongoose.model('User', UserSchema)
+// Delete existing model if it exists to avoid caching issues
+if (mongoose.models.User) {
+  delete mongoose.models.User
+}
+
+export default mongoose.model('User', UserSchema)

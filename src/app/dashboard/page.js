@@ -22,7 +22,7 @@ export default function Dashboard() {
 
   if (status === 'loading') {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     )
@@ -33,10 +33,13 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="container py-8">
+      {/* Grid Background */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none"></div>
+      
+      <main className="relative container max-w-6xl py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -44,34 +47,34 @@ export default function Dashboard() {
         >
           {/* Header */}
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold tracking-tight">
-              Welcome back, {session.user.name?.split(' ')[0]}! 👋
+            <h1 className="text-3xl md:text-4xl font-bold">
+              Welcome, <span className="gradient-text">{session.user.name?.split(' ')[0]}</span>
             </h1>
-            <p className="text-muted-foreground text-lg">
-              Create engaging LinkedIn captions powered by AI
+            <p className="text-muted-foreground">
+              How can I help you today?
             </p>
           </div>
 
           {/* Main Content */}
           <Tabs defaultValue="generate" className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="generate" className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
+            <TabsList className="bg-card border border-border">
+              <TabsTrigger value="generate" className="data-[state=active]:bg-secondary">
+                <Sparkles className="h-4 w-4 mr-2" />
                 Generate
               </TabsTrigger>
-              <TabsTrigger value="history" className="flex items-center gap-2">
-                <History className="h-4 w-4" />
+              <TabsTrigger value="history" className="data-[state=active]:bg-secondary">
+                <History className="h-4 w-4 mr-2" />
                 History
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="generate" className="space-y-6">
+            <TabsContent value="generate" className="space-y-6 mt-6">
               <CaptionGenerator 
                 onCaptionGenerated={() => setRefreshHistory(prev => prev + 1)}
               />
             </TabsContent>
 
-            <TabsContent value="history">
+            <TabsContent value="history" className="mt-6">
               <CaptionHistory refresh={refreshHistory} />
             </TabsContent>
           </Tabs>
