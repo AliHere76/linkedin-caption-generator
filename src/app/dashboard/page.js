@@ -8,6 +8,31 @@ import { Card } from '@/components/ui/card'
 import { Sparkles, History, LogOut, Menu, X, Send, Copy, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
+// Word-by-word animation component
+const AnimatedText = ({ text }) => {
+  const words = text.split(' ')
+  
+  return (
+    <span>
+      {words.map((word, index) => (
+        <motion.span
+          key={index}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.3,
+            delay: index * 0.05,
+            ease: 'easeOut'
+          }}
+          style={{ display: 'inline-block', marginRight: '0.25em' }}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </span>
+  )
+}
+
 export default function Dashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -18,6 +43,7 @@ export default function Dashboard() {
   const [history, setHistory] = useState([])
   const [copied, setCopied] = useState(false)
   const [hasGenerated, setHasGenerated] = useState(false)
+  const [showAnimation, setShowAnimation] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -50,6 +76,7 @@ export default function Dashboard() {
     setLoading(true)
     setHasGenerated(true)
     setGeneratedCaption('')
+    setShowAnimation(false)
 
     try {
       const response = await fetch('/api/generate-caption', {
@@ -62,6 +89,7 @@ export default function Dashboard() {
 
       if (response.ok) {
         setGeneratedCaption(data.caption)
+        setShowAnimation(true)
         fetchHistory()
       } else {
         console.error('Error:', data.error)
@@ -83,6 +111,7 @@ export default function Dashboard() {
     setGeneratedCaption(caption.caption)
     setPrompt(caption.prompt)
     setHasGenerated(true)
+    setShowAnimation(true)
   }
 
   if (status === 'loading') {
@@ -121,7 +150,7 @@ export default function Dashboard() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden"
+                className="lg:hidden transition-all duration-300 hover:scale-110 hover:bg-secondary/50 active:scale-95"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -134,8 +163,9 @@ export default function Dashboard() {
                   setPrompt('')
                   setGeneratedCaption('')
                   setHasGenerated(false)
+                  setShowAnimation(false)
                 }}
-                className="w-full gradient-orange text-white hover:opacity-90 transition-all duration-300 hover:scale-[1.02]"
+                className="w-full gradient-orange text-white hover:opacity-90 transition-all duration-300 hover:scale-[1.03] hover:shadow-lg hover:shadow-orange-500/50 active:scale-[0.98]"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
                 New Chat
@@ -156,9 +186,9 @@ export default function Dashboard() {
                   <button
                     key={item._id}
                     onClick={() => loadHistoryItem(item)}
-                    className="w-full text-left p-3 rounded-lg hover:bg-secondary/50 transition-all duration-200 group border border-transparent hover:border-border"
+                    className="w-full text-left p-3 rounded-lg hover:bg-secondary/80 transition-all duration-300 group border border-transparent hover:border-orange-500/50 hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
                   >
-                    <p className="text-sm text-foreground truncate group-hover:text-orange-500 transition-colors">
+                    <p className="text-sm text-foreground truncate group-hover:text-orange-500 transition-colors duration-300">
                       {item.prompt}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -171,7 +201,7 @@ export default function Dashboard() {
 
             {/* User Profile & Sign Out */}
             <div className="p-4 border-t border-border space-y-3">
-              <div className="flex items-center space-x-3 p-3 rounded-lg bg-secondary/30">
+              <div className="flex items-center space-x-3 p-3 rounded-lg bg-secondary/30 transition-all duration-300 hover:bg-secondary/50">
                 <div className="w-10 h-10 rounded-full gradient-orange flex items-center justify-center text-white font-semibold">
                   {session.user.name?.charAt(0).toUpperCase()}
                 </div>
@@ -188,7 +218,7 @@ export default function Dashboard() {
               <Button
                 onClick={() => signOut({ callbackUrl: '/' })}
                 variant="outline"
-                className="w-full border-border hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive transition-all duration-300"
+                className="w-full bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 hover:scale-[1.03] hover:shadow-lg hover:shadow-red-500/50 active:scale-[0.98] font-medium"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
@@ -207,7 +237,7 @@ export default function Dashboard() {
               variant="ghost"
               size="sm"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="hover:bg-secondary"
+              className="hover:bg-secondary transition-all duration-300 hover:scale-110 active:scale-95"
             >
               <Menu className="h-5 w-5" />
             </Button>
@@ -267,7 +297,7 @@ export default function Dashboard() {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="rounded-lg hover:bg-secondary"
+                          className="rounded-lg hover:bg-secondary transition-all duration-300 hover:scale-105 active:scale-95"
                           disabled={loading}
                         >
                           Think
@@ -276,7 +306,7 @@ export default function Dashboard() {
                           type="submit"
                           size="sm"
                           disabled={loading || !prompt.trim()}
-                          className="rounded-full gradient-orange text-white hover:opacity-90 transition-all duration-300 hover:scale-105 disabled:opacity-50"
+                          className="rounded-full gradient-orange text-white hover:opacity-90 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-orange-500/50 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                         >
                           {loading ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
@@ -319,7 +349,7 @@ export default function Dashboard() {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="rounded-lg hover:bg-secondary text-xs"
+                            className="rounded-lg hover:bg-secondary text-xs transition-all duration-300 hover:scale-105 active:scale-95"
                             disabled={loading}
                           >
                             Think
@@ -328,7 +358,7 @@ export default function Dashboard() {
                             type="submit"
                             size="sm"
                             disabled={loading || !prompt.trim()}
-                            className="rounded-full gradient-orange text-white hover:opacity-90 transition-all duration-300 hover:scale-105 disabled:opacity-50"
+                            className="rounded-full gradient-orange text-white hover:opacity-90 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-orange-500/50 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                           >
                             {loading ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
@@ -369,7 +399,7 @@ export default function Dashboard() {
                               onClick={handleCopy}
                               variant="ghost"
                               size="sm"
-                              className="hover:bg-secondary transition-all duration-300 hover:scale-105"
+                              className="hover:bg-secondary transition-all duration-300 hover:scale-110 hover:shadow-md active:scale-95"
                             >
                               {copied ? (
                                 <>
@@ -386,7 +416,11 @@ export default function Dashboard() {
                           </div>
                           <div className="prose prose-invert max-w-none">
                             <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-                              {generatedCaption}
+                              {showAnimation ? (
+                                <AnimatedText text={generatedCaption} />
+                              ) : (
+                                generatedCaption
+                              )}
                             </p>
                           </div>
                         </Card>
