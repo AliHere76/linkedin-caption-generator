@@ -301,7 +301,7 @@ export default function Dashboard() {
                     Welcome, <span className="gradient-text">{session.user.name?.split(' ')[0]}</span>
                   </h1>
                   <p className="text-lg text-muted-foreground">
-                    Let's create something Magical ✨
+                    Let&apos;s create something Magical ✨
                   </p>
                   </div>
 
