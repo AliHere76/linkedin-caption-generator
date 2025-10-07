@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Sparkles, Loader2, Mail, Lock, User } from 'lucide-react'
+import { Sparkles, Loader2, Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function Home() {
@@ -18,11 +18,13 @@ export default function Home() {
   // Sign In State
   const [signInEmail, setSignInEmail] = useState('')
   const [signInPassword, setSignInPassword] = useState('')
+  const [showSignInPassword, setShowSignInPassword] = useState(false)
 
   // Sign Up State
   const [signUpName, setSignUpName] = useState('')
   const [signUpEmail, setSignUpEmail] = useState('')
   const [signUpPassword, setSignUpPassword] = useState('')
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false)
 
   useEffect(() => {
     if (session) {
@@ -115,14 +117,14 @@ export default function Home() {
       
       <div className="relative z-10 min-h-screen">
         <div className="container mx-auto px-4 h-screen flex items-center">
-          <div className="grid lg:grid-cols-2 gap-8 w-full items-center">
+          <div className="grid lg:grid-cols-2 gap-6 w-full items-center max-w-7xl mx-auto">
             
             {/* Left Section - Welcome Content */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
-              className="space-y-8 lg:pr-8"
+              className="space-y-8 lg:pr-6"
             >
               {/* Logo/Icon */}
               <motion.div
@@ -184,19 +186,24 @@ export default function Home() {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="w-full max-w-md mx-auto lg:mx-0 lg:ml-auto lg:pl-8"
+              className="w-full max-w-xl mx-auto lg:mx-0 lg:ml-auto lg:pl-6"
             >
               <Card className="border-border bg-card">
                 <CardContent className="p-8">
                 <Tabs defaultValue="signin" className="w-full">
                   <TabsList className="grid w-full grid-cols-2 bg-secondary mb-6">
-                    <TabsTrigger value="signin">Sign In</TabsTrigger>
-                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                    <TabsTrigger value="signin" className="data-[state=active]:bg-primary">Sign In</TabsTrigger>
+                    <TabsTrigger value="signup" className="data-[state=active]:bg-primary">Sign Up</TabsTrigger>
                   </TabsList>
 
                   {/* Sign In Tab */}
-                  <TabsContent value="signin">
-                    <form onSubmit={handleSignIn} className="space-y-4">
+                  <TabsContent value="signin" className="mt-0">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                    <form onSubmit={handleSignIn} className="space-y-4 min-h-[420px]">
                       {error && (
                         <div className="bg-destructive/10 border border-destructive/50 text-destructive px-4 py-3 rounded-lg text-sm">
                           {error}
@@ -213,6 +220,7 @@ export default function Home() {
                             value={signInEmail}
                             onChange={(e) => setSignInEmail(e.target.value)}
                             className="pl-10 bg-secondary/50 border-border"
+                            autoComplete="off"
                             required
                           />
                         </div>
@@ -223,13 +231,25 @@ export default function Home() {
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
-                            type="password"
+                            type={showSignInPassword ? 'text' : 'password'}
                             placeholder="••••••••"
                             value={signInPassword}
                             onChange={(e) => setSignInPassword(e.target.value)}
-                            className="pl-10 bg-secondary/50 border-border"
+                            className="pl-10 pr-10 bg-secondary/50 border-border"
+                            autoComplete="current-password"
                             required
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowSignInPassword(!showSignInPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-orange-500 transition-colors duration-200"
+                          >
+                            {showSignInPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
                         </div>
                       </div>
 
@@ -284,11 +304,17 @@ export default function Home() {
                         Google
                       </Button>
                     </form>
+                    </motion.div>
                   </TabsContent>
 
                   {/* Sign Up Tab */}
-                  <TabsContent value="signup">
-                    <form onSubmit={handleSignUp} className="space-y-4">
+                  <TabsContent value="signup" className="mt-0">
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                    <form onSubmit={handleSignUp} className="space-y-4 min-h-[420px]">
                       {error && (
                         <div className="bg-destructive/10 border border-destructive/50 text-destructive px-4 py-3 rounded-lg text-sm">
                           {error}
@@ -305,6 +331,7 @@ export default function Home() {
                             value={signUpName}
                             onChange={(e) => setSignUpName(e.target.value)}
                             className="pl-10 bg-secondary/50 border-border"
+                            autoComplete="off"
                             required
                           />
                         </div>
@@ -320,6 +347,7 @@ export default function Home() {
                             value={signUpEmail}
                             onChange={(e) => setSignUpEmail(e.target.value)}
                             className="pl-10 bg-secondary/50 border-border"
+                            autoComplete="off"
                             required
                           />
                         </div>
@@ -330,14 +358,26 @@ export default function Home() {
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
-                            type="password"
+                            type={showSignUpPassword ? 'text' : 'password'}
                             placeholder="••••••••"
                             value={signUpPassword}
                             onChange={(e) => setSignUpPassword(e.target.value)}
-                            className="pl-10 bg-secondary/50 border-border"
+                            className="pl-10 pr-10 bg-secondary/50 border-border"
+                            autoComplete="new-password"
                             required
                             minLength={6}
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-orange-500 transition-colors duration-200"
+                          >
+                            {showSignUpPassword ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
                         </div>
                         <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
                       </div>
@@ -393,6 +433,7 @@ export default function Home() {
                         Google
                       </Button>
                     </form>
+                    </motion.div>
                   </TabsContent>
                 </Tabs>
               </CardContent>

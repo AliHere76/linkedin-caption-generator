@@ -9,6 +9,9 @@ import { Sparkles, History, LogOut, Menu, X, Send, Copy, Check } from 'lucide-re
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '@/hooks/use-toast'
 import { Toaster } from '@/components/ui/toaster'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import removeMd from 'remove-markdown'
 
 // Word-by-word animation component
 const AnimatedText = ({ text }) => {
@@ -114,7 +117,9 @@ export default function Dashboard() {
   }
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(generatedCaption)
+    // Remove markdown formatting before copying
+    const plainText = removeMd(generatedCaption)
+    navigator.clipboard.writeText(plainText)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
     
@@ -432,14 +437,48 @@ export default function Dashboard() {
                               )}
                             </Button>
                           </div>
-                          <div className="prose prose-invert max-w-none">
-                            <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-                              {showAnimation ? (
-                                <AnimatedText text={generatedCaption} />
-                              ) : (
-                                generatedCaption
-                              )}
-                            </p>
+                          <div className="prose prose-invert max-w-none markdown-content">
+                            {showAnimation ? (
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5 }}
+                              >
+                                <ReactMarkdown
+                                  remarkPlugins={[remarkGfm]}
+                                  components={{
+                                    p: ({ children }) => <p className="text-foreground leading-relaxed mb-4">{children}</p>,
+                                    strong: ({ children }) => <strong className="font-bold text-orange-400">{children}</strong>,
+                                    em: ({ children }) => <em className="italic text-foreground/90">{children}</em>,
+                                    ul: ({ children }) => <ul className="list-disc list-inside space-y-2 text-foreground">{children}</ul>,
+                                    ol: ({ children }) => <ol className="list-decimal list-inside space-y-2 text-foreground">{children}</ol>,
+                                    li: ({ children }) => <li className="text-foreground">{children}</li>,
+                                    h1: ({ children }) => <h1 className="text-2xl font-bold text-foreground mb-3">{children}</h1>,
+                                    h2: ({ children }) => <h2 className="text-xl font-bold text-foreground mb-2">{children}</h2>,
+                                    h3: ({ children }) => <h3 className="text-lg font-bold text-foreground mb-2">{children}</h3>,
+                                  }}
+                                >
+                                  {generatedCaption}
+                                </ReactMarkdown>
+                              </motion.div>
+                            ) : (
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  p: ({ children }) => <p className="text-foreground leading-relaxed mb-4">{children}</p>,
+                                  strong: ({ children }) => <strong className="font-bold text-orange-400">{children}</strong>,
+                                  em: ({ children }) => <em className="italic text-foreground/90">{children}</em>,
+                                  ul: ({ children }) => <ul className="list-disc list-inside space-y-2 text-foreground">{children}</ul>,
+                                  ol: ({ children }) => <ol className="list-decimal list-inside space-y-2 text-foreground">{children}</ol>,
+                                  li: ({ children }) => <li className="text-foreground">{children}</li>,
+                                  h1: ({ children }) => <h1 className="text-2xl font-bold text-foreground mb-3">{children}</h1>,
+                                  h2: ({ children }) => <h2 className="text-xl font-bold text-foreground mb-2">{children}</h2>,
+                                  h3: ({ children }) => <h3 className="text-lg font-bold text-foreground mb-2">{children}</h3>,
+                                }}
+                              >
+                                {generatedCaption}
+                              </ReactMarkdown>
+                            )}
                           </div>
                           
                           {/* New Chat Prompt */}
