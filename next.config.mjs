@@ -8,9 +8,6 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
-  turbopack: {
-    root: '/Users/maryammehboob/Documents/linkedin-caption-generator',
-  },
 };
 
 export default nextConfig;

@@ -6,8 +6,8 @@ import Providers from '@/components/Providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'LinkedIn Caption Generator | AI-Powered Posts',
-  description: 'Generate engaging LinkedIn captions with AI',
+  title: 'LinkedWizard | AI-Powered LinkedIn Posts',
+  description: 'Generate engaging LinkedIn captions with AI using LinkedWizard',
 }
 
 export default function RootLayout({ children }) {

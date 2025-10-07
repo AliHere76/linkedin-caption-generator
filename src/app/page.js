@@ -139,7 +139,7 @@ export default function Home() {
               {/* Main Heading */}
               <div className="space-y-6">
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground">
-                  Welcome to <span className="gradient-text">LinkedIn AI</span>
+                  Welcome to <span className="gradient-text">LinkedWizard</span>
                 </h1>
                 
                 <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl">

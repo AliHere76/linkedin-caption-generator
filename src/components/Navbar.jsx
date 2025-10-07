@@ -24,7 +24,7 @@ export default function Navbar() {
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <span className="text-lg font-semibold">
-            LinkedIn AI
+            LinkedWizard
           </span>
         </Link>
 

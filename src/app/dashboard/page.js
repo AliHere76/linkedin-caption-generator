@@ -167,7 +167,7 @@ export default function Dashboard() {
                 <div className="w-8 h-8 rounded-lg gradient-orange flex items-center justify-center">
                   <Sparkles className="h-4 w-4 text-white" />
                 </div>
-                <span className="font-semibold text-foreground">LinkedIn AI</span>
+                <span className="font-semibold text-foreground">LinkedWizard</span>
               </div>
               <Button
                 variant="ghost"
@@ -265,7 +265,7 @@ export default function Dashboard() {
               <Menu className="h-5 w-5" />
             </Button>
             <div className="text-sm text-muted-foreground">
-              LinkedIn Caption Generator
+              LinkedWizard - AI Caption Generator
             </div>
             <div className="w-10"></div>
           </div>
