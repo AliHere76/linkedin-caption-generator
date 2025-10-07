@@ -7,35 +7,47 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Sparkles, History, LogOut, Menu, X, Send, Copy, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useToast } from '@/hooks/use-toast'
+import { Toaster } from '@/components/ui/toaster'
 
 // Word-by-word animation component
 const AnimatedText = ({ text }) => {
-  const words = text.split(' ')
+  // Split by paragraphs first to preserve line breaks
+  const paragraphs = text.split('\n')
   
   return (
-    <span>
-      {words.map((word, index) => (
-        <motion.span
-          key={index}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.3,
-            delay: index * 0.05,
-            ease: 'easeOut'
-          }}
-          style={{ display: 'inline-block', marginRight: '0.25em' }}
-        >
-          {word}
-        </motion.span>
-      ))}
-    </span>
+    <>
+      {paragraphs.map((paragraph, pIndex) => {
+        const words = paragraph.split(' ').filter(word => word.length > 0)
+        return (
+          <span key={pIndex}>
+            {words.map((word, wIndex) => (
+              <motion.span
+                key={`${pIndex}-${wIndex}`}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.2,
+                  delay: (pIndex * words.length + wIndex) * 0.03,
+                  ease: 'easeOut'
+                }}
+                style={{ display: 'inline' }}
+              >
+                {word}{' '}
+              </motion.span>
+            ))}
+            {pIndex < paragraphs.length - 1 && '\n'}
+          </span>
+        )
+      })}
+    </>
   )
 }
 
 export default function Dashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { toast } = useToast()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [prompt, setPrompt] = useState('')
   const [loading, setLoading] = useState(false)
@@ -105,13 +117,19 @@ export default function Dashboard() {
     navigator.clipboard.writeText(generatedCaption)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+    
+    toast({
+      title: "✓ Copied to clipboard!",
+      description: "Your caption has been copied successfully.",
+      duration: 5000,
+    })
   }
 
   const loadHistoryItem = (caption) => {
     setGeneratedCaption(caption.caption)
     setPrompt(caption.prompt)
     setHasGenerated(true)
-    setShowAnimation(true)
+    setShowAnimation(false) // No animation for history items
   }
 
   if (status === 'loading') {
@@ -136,10 +154,10 @@ export default function Dashboard() {
             animate={{ x: 0 }}
             exit={{ x: -300 }}
             transition={{ type: 'spring', damping: 20 }}
-            className="fixed left-0 top-0 h-screen w-64 bg-card border-r border-border z-50 flex flex-col"
+            className="fixed left-0 top-0 h-screen w-64 bg-card/80 backdrop-blur-xl border-r border-border/50 z-50 flex flex-col shadow-2xl"
           >
             {/* Sidebar Header */}
-            <div className="p-4 border-b border-border flex items-center justify-between">
+            <div className="p-4 border-b border-border/30 flex items-center justify-between backdrop-blur-sm">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 rounded-lg gradient-orange flex items-center justify-center">
                   <Sparkles className="h-4 w-4 text-white" />
@@ -200,7 +218,7 @@ export default function Dashboard() {
             </div>
 
             {/* User Profile & Sign Out */}
-            <div className="p-4 border-t border-border space-y-3">
+            <div className="p-4 border-t border-border/30 space-y-3 backdrop-blur-sm">
               <div className="flex items-center space-x-3 p-3 rounded-lg bg-secondary/30 transition-all duration-300 hover:bg-secondary/50">
                 <div className="w-10 h-10 rounded-full gradient-orange flex items-center justify-center text-white font-semibold">
                   {session.user.name?.charAt(0).toUpperCase()}
@@ -341,8 +359,8 @@ export default function Dashboard() {
                           value={prompt}
                           onChange={(e) => setPrompt(e.target.value)}
                           placeholder="Ask whatever you want"
-                          className="w-full h-12 px-6 pr-32 text-sm bg-card border-border rounded-xl focus:ring-2 focus:ring-orange-500/50 transition-all"
-                          disabled={loading}
+                          className="w-full h-12 px-6 pr-32 text-sm bg-card border-border rounded-xl focus:ring-2 focus:ring-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={loading || generatedCaption}
                         />
                         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-2">
                           <Button
@@ -350,14 +368,14 @@ export default function Dashboard() {
                             variant="ghost"
                             size="sm"
                             className="rounded-lg hover:bg-secondary text-xs transition-all duration-300 hover:scale-105 active:scale-95"
-                            disabled={loading}
+                            disabled={loading || generatedCaption}
                           >
                             Think
                           </Button>
                           <Button
                             type="submit"
                             size="sm"
-                            disabled={loading || !prompt.trim()}
+                            disabled={loading || !prompt.trim() || generatedCaption}
                             className="rounded-full gradient-orange text-white hover:opacity-90 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-orange-500/50 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                           >
                             {loading ? (
@@ -423,6 +441,25 @@ export default function Dashboard() {
                               )}
                             </p>
                           </div>
+                          
+                          {/* New Chat Prompt */}
+                          <div className="mt-6 p-4 bg-secondary/30 border border-border rounded-lg text-center">
+                            <p className="text-sm text-muted-foreground mb-3">
+                              Want to generate another caption?
+                            </p>
+                            <Button
+                              onClick={() => {
+                                setPrompt('')
+                                setGeneratedCaption('')
+                                setHasGenerated(false)
+                                setShowAnimation(false)
+                              }}
+                              className="gradient-orange text-white hover:opacity-90 transition-all duration-300 hover:scale-[1.03] hover:shadow-lg hover:shadow-orange-500/50 active:scale-[0.98]"
+                            >
+                              <Sparkles className="h-4 w-4 mr-2" />
+                              Start New Chat
+                            </Button>
+                          </div>
                         </Card>
                       </motion.div>
                     ) : null}
@@ -433,6 +470,7 @@ export default function Dashboard() {
           </AnimatePresence>
         </div>
       </div>
+      <Toaster />
     </div>
   )
 }
