@@ -14,6 +14,10 @@ const CaptionSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  thumbnailBlurHash: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

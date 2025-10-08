@@ -1,11 +1,11 @@
 'use client'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
-import { Sparkles, History, LogOut, Menu, X, Send, Copy, Check } from 'lucide-react'
+import { Sparkles, History, LogOut, Menu, X, Send, Copy, Check, Image as ImageIcon, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '@/hooks/use-toast'
 import { Toaster } from '@/components/ui/toaster'
@@ -59,6 +59,9 @@ export default function Dashboard() {
   const [copied, setCopied] = useState(false)
   const [hasGenerated, setHasGenerated] = useState(false)
   const [showAnimation, setShowAnimation] = useState(false)
+  const [thumbnail, setThumbnail] = useState(null)
+  const [thumbnailPreview, setThumbnailPreview] = useState(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -84,6 +87,38 @@ export default function Dashboard() {
     }
   }
 
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "⚠️ File too large",
+          description: "Image size should be less than 5MB",
+          variant: "destructive",
+          duration: 3000,
+        })
+        return
+      }
+      
+      setThumbnail(file)
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setThumbnailPreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeThumbnail = () => {
+    setThumbnail(null)
+    setThumbnailPreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
   const handleGenerate = async (e) => {
     e.preventDefault()
     if (!prompt.trim() || loading) return
@@ -94,10 +129,24 @@ export default function Dashboard() {
     setShowAnimation(false)
 
     try {
+      let imageBase64 = null
+      
+      if (thumbnail) {
+        const reader = new FileReader()
+        imageBase64 = await new Promise((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result)
+          reader.onerror = reject
+          reader.readAsDataURL(thumbnail)
+        })
+      }
+
       const response = await fetch('/api/generate-caption', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt.trim() })
+        body: JSON.stringify({ 
+          prompt: prompt.trim(),
+          image: imageBase64
+        })
       })
 
       const data = await response.json()
@@ -105,12 +154,25 @@ export default function Dashboard() {
       if (response.ok) {
         setGeneratedCaption(data.caption)
         setShowAnimation(true)
+        removeThumbnail()
         fetchHistory()
       } else {
         console.error('Error:', data.error)
+        toast({
+          title: "❌ Error",
+          description: data.error || "Failed to generate caption",
+          variant: "destructive",
+          duration: 3000,
+        })
       }
     } catch (error) {
       console.error('Error generating caption:', error)
+      toast({
+        title: "❌ Error",
+        description: "Failed to generate caption",
+        variant: "destructive",
+        duration: 3000,
+      })
     } finally {
       setLoading(false)
     }
@@ -187,6 +249,7 @@ export default function Dashboard() {
                   setGeneratedCaption('')
                   setHasGenerated(false)
                   setShowAnimation(false)
+                  removeThumbnail()
                 }}
                 className="w-full gradient-orange text-white hover:opacity-90 transition-all duration-300 hover:scale-[1.03] hover:shadow-lg hover:shadow-orange-500/50 active:scale-[0.98]"
               >
@@ -306,24 +369,60 @@ export default function Dashboard() {
                   </div>
 
                   {/* Input Form - Center */}
-                  <form onSubmit={handleGenerate} className="relative">
+                  <form onSubmit={handleGenerate} className="relative space-y-4">
+                    {/* Thumbnail Preview */}
+                    {thumbnailPreview && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex justify-center"
+                      >
+                        <div className="relative w-32 h-32 rounded-xl overflow-hidden border-2 border-border shadow-lg">
+                          <img
+                            src={thumbnailPreview}
+                            alt="Thumbnail preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="destructive"
+                            className="absolute top-2 right-2 h-6 w-6 rounded-full shadow-md"
+                            onClick={removeThumbnail}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+
                     <div className="relative">
                       <Input
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="Ask whatever you want"
-                        className="w-full h-14 px-6 pr-32 text-base bg-card border-border rounded-2xl focus:ring-2 focus:ring-orange-500/50 transition-all"
+                        placeholder="Make your most viral post ever..."
+                        className="w-full h-14 px-6 pr-40 text-base bg-card border-border rounded-2xl focus:ring-2 focus:ring-orange-500/50 transition-all"
                         disabled={loading}
                       />
                       <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-2">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                          className="hidden"
+                          id="thumbnail-upload-welcome"
+                        />
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           className="rounded-lg hover:bg-secondary transition-all duration-300 hover:scale-105 active:scale-95"
                           disabled={loading}
+                          onClick={() => fileInputRef.current?.click()}
                         >
-                          Think
+                          <ImageIcon className="h-4 w-4 mr-1" />
+                          {thumbnail ? 'Change' : 'Image'}
                         </Button>
                         <Button
                           type="submit"
@@ -357,14 +456,41 @@ export default function Dashboard() {
                   transition={{ type: 'spring', damping: 20 }}
                   className="px-4 py-6 border-b border-border bg-background/50 backdrop-blur-sm"
                 >
-                  <div className="max-w-4xl mx-auto">
+                  <div className="max-w-4xl mx-auto space-y-3">
+                    {/* Thumbnail Preview for top input */}
+                    {thumbnailPreview && !generatedCaption && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="flex items-center gap-3"
+                      >
+                        <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                          <img
+                            src={thumbnailPreview}
+                            alt="Thumbnail preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="destructive"
+                            className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full"
+                            onClick={removeThumbnail}
+                          >
+                            <X className="h-2.5 w-2.5" />
+                          </Button>
+                        </div>
+                        <span className="text-xs text-muted-foreground">Image attached</span>
+                      </motion.div>
+                    )}
+
                     <form onSubmit={handleGenerate} className="relative">
                       <div className="relative">
                         <Input
                           value={prompt}
                           onChange={(e) => setPrompt(e.target.value)}
                           placeholder="Ask whatever you want"
-                          className="w-full h-12 px-6 pr-32 text-sm bg-card border-border rounded-xl focus:ring-2 focus:ring-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full h-12 px-6 pr-40 text-sm bg-card border-border rounded-xl focus:ring-2 focus:ring-orange-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                           disabled={loading || generatedCaption}
                         />
                         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-2">
@@ -374,8 +500,10 @@ export default function Dashboard() {
                             size="sm"
                             className="rounded-lg hover:bg-secondary text-xs transition-all duration-300 hover:scale-105 active:scale-95"
                             disabled={loading || generatedCaption}
+                            onClick={() => fileInputRef.current?.click()}
                           >
-                            Think
+                            <ImageIcon className="h-3 w-3 mr-1" />
+                            {thumbnail ? 'Change' : 'Image'}
                           </Button>
                           <Button
                             type="submit"
@@ -492,6 +620,7 @@ export default function Dashboard() {
                                 setGeneratedCaption('')
                                 setHasGenerated(false)
                                 setShowAnimation(false)
+                                removeThumbnail()
                               }}
                               className="gradient-orange text-white hover:opacity-90 transition-all duration-300 hover:scale-[1.03] hover:shadow-lg hover:shadow-orange-500/50 active:scale-[0.98]"
                             >

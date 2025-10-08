@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { Copy, Trash2, Loader2, History } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Blurhash } from 'react-blurhash'
 
 export default function CaptionHistory({ refresh }) {
   const [history, setHistory] = useState([])
@@ -100,6 +101,22 @@ export default function CaptionHistory({ refresh }) {
                     <CardContent className="pt-6">
                       <div className="space-y-3">
                         <div className="flex items-start justify-between gap-4">
+                          {/* Thumbnail with Blurhash */}
+                          {item.thumbnailBlurHash && (
+                            <div className="flex-shrink-0">
+                              <div className="w-24 h-24 rounded-lg overflow-hidden border border-border">
+                                <Blurhash
+                                  hash={item.thumbnailBlurHash}
+                                  width="100%"
+                                  height="100%"
+                                  resolutionX={32}
+                                  resolutionY={32}
+                                  punch={1}
+                                />
+                              </div>
+                            </div>
+                          )}
+                          
                           <div className="flex-1 space-y-2">
                             <Badge variant="outline" className="text-xs">
                               {formatDate(item.createdAt)}
