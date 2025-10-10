@@ -1,5 +1,4 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../auth/[...nextauth]/route'
+import { verifyToken } from '@/lib/auth'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import connectDB from '@/lib/mongodb'
 import Caption from '@/models/Caption'
@@ -35,10 +34,10 @@ async function generateBlurHash(imageBase64) {
 
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions)
+    const verification = verifyToken(request)
     
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (verification.error) {
+      return NextResponse.json({ error: verification.error }, { status: verification.status })
     }
 
     const { prompt, image } = await request.json()
@@ -99,7 +98,7 @@ export async function POST(request) {
 
     // Save to database
     await connectDB()
-    const user = await User.findOne({ email: session.user.email })
+    const user = await User.findOne({ email: verification.email })
 
     if (user) {
       await Caption.create({

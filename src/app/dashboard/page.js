@@ -1,5 +1,5 @@
 'use client'
-import { useSession, signOut } from 'next-auth/react'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
@@ -48,7 +48,7 @@ const AnimatedText = ({ text }) => {
 }
 
 export default function Dashboard() {
-  const { data: session, status } = useSession()
+  const { user, loading: authLoading, logout } = useAuth()
   const router = useRouter()
   const { toast } = useToast()
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -64,20 +64,25 @@ export default function Dashboard() {
   const fileInputRef = useRef(null)
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (!authLoading && !user) {
       router.push('/')
     }
-  }, [status, router])
+  }, [authLoading, user, router])
 
   useEffect(() => {
-    if (session) {
+    if (user) {
       fetchHistory()
     }
-  }, [session])
+  }, [user])
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch('/api/captions')
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/captions', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       const data = await response.json()
       if (response.ok) {
         setHistory(data.captions || [])
@@ -140,9 +145,13 @@ export default function Dashboard() {
         })
       }
 
+      const token = localStorage.getItem('token')
       const response = await fetch('/api/generate-caption', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ 
           prompt: prompt.trim(),
           image: imageBase64
@@ -199,7 +208,7 @@ export default function Dashboard() {
     setShowAnimation(false) // No animation for history items
   }
 
-  if (status === 'loading') {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -207,7 +216,7 @@ export default function Dashboard() {
     )
   }
 
-  if (!session) {
+  if (!user) {
     return null
   }
 
@@ -289,20 +298,20 @@ export default function Dashboard() {
             <div className="p-4 border-t border-border/30 space-y-3 backdrop-blur-sm">
               <div className="flex items-center space-x-3 p-3 rounded-lg bg-secondary/30 transition-all duration-300 hover:bg-secondary/50">
                 <div className="w-10 h-10 rounded-full gradient-orange flex items-center justify-center text-white font-semibold">
-                  {session.user.name?.charAt(0).toUpperCase()}
+                  {user.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">
-                    {session.user.name}
+                    {user.name}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {session.user.email}
+                    {user.email}
                   </p>
                 </div>
               </div>
               
               <Button
-                onClick={() => signOut({ callbackUrl: '/' })}
+                onClick={logout}
                 variant="outline"
                 className="w-full bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 hover:scale-[1.03] hover:shadow-lg hover:shadow-red-500/50 active:scale-[0.98] font-medium"
               >
@@ -361,7 +370,7 @@ export default function Dashboard() {
                   </motion.div>
                   
                   <h1 className="text-4xl md:text-5xl font-bold">
-                    Welcome, <span className="gradient-text">{session.user.name?.split(' ')[0]}</span>
+                    Welcome, <span className="gradient-text">{user.name?.split(' ')[0]}</span>
                   </h1>
                   <p className="text-lg text-muted-foreground">
                     Let&apos;s create something Magical ✨
