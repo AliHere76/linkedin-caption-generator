@@ -42,12 +42,14 @@ export default function Home() {
         email: signInEmail,
         password: signInPassword,
         redirect: false,
+        callbackUrl: '/dashboard',
       })
 
       if (result?.error) {
         setError(result.error)
-      } else {
-        router.push('/dashboard')
+      } else if (result?.ok) {
+        // Force a hard navigation to ensure session is loaded
+        window.location.href = '/dashboard'
       }
     } catch (err) {
       setError('An error occurred during sign in')
@@ -89,8 +91,9 @@ export default function Home() {
 
       if (result?.error) {
         setError('Registration successful but sign in failed. Please try signing in.')
-      } else {
-        router.push('/dashboard')
+      } else if (result?.ok) {
+        // Force a hard navigation to ensure session is loaded
+        window.location.href = '/dashboard'
       }
     } catch (err) {
       setError('An error occurred during registration')

@@ -1,0 +1,51 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: linkedin-caption-webapp-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: linkedin-caption-webapp
+  minReplicas: 2     # Minimum number of pods
+  maxReplicas: 10    # Maximum number of pods
+  metrics:
+  # Scale based on CPU usage
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70  # Scale up when CPU > 70%
+  
+  # Scale based on memory usage
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80  # Scale up when memory > 80%
+  
+  # Scaling behavior configuration
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Wait 5 min before scaling down
+      policies:
+      - type: Percent
+        value: 50         # Scale down max 50% of pods at a time
+        periodSeconds: 15
+      - type: Pods
+        value: 1          # Or scale down 1 pod at a time
+        periodSeconds: 15
+      selectPolicy: Min   # Use the policy that scales down the least
+    
+    scaleUp:
+      stabilizationWindowSeconds: 0  # Scale up immediately
+      policies:
+      - type: Percent
+        value: 100        # Scale up max 100% (double) pods at a time
+        periodSeconds: 15
+      - type: Pods
+        value: 2          # Or add 2 pods at a time
+        periodSeconds: 15
+      selectPolicy: Max   # Use the policy that scales up the most

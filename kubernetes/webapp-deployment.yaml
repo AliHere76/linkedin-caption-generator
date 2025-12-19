@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkedin-caption-webapp
+  labels:
+    app: linkedin-caption-webapp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: linkedin-caption-webapp
+  template:
+    metadata:
+      labels:
+        app: linkedin-caption-webapp
+    spec:
+      containers:
+      - name: webapp
+        image: linkedin-caption-webapp:latest
+        imagePullPolicy: Never  # Use local image loaded into minikube
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        env:
+        # MongoDB Atlas Connection
+        - name: MONGODB_URI
+          value: "mongodb+srv://muali:vibe%409288@cluster0.ivibdhl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+        
+        # NextAuth Configuration
+        - name: NEXTAUTH_SECRET
+          value: "5dfd5548b235ebb38fc2a66b82f94e81"
+        
+        - name: NEXTAUTH_URL
+          value: "http://localhost:3000"  # Will update with ngrok URL later
+        
+        # Google OAuth Credentials
+        - name: GOOGLE_CLIENT_ID
+          value: "40926805438-9n40j11o63cj2l5p8geghtq9culksu29.apps.googleusercontent.com"
+        
+        - name: GOOGLE_CLIENT_SECRET
+          value: "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"
+        
+        # Gemini API Key
+        - name: GEMINI_API_KEY
+          value: "AIzaSyD6xYa1ALCnp99iYzIDxsHF3txs6nEqCqU"
+        
+        # Resource limits for HPA to work properly
+        resources:
+          requests:
+            cpu: 100m      # Minimum CPU required
+            memory: 128Mi  # Minimum memory required
+          limits:
+            cpu: 500m      # Maximum CPU allowed
+            memory: 512Mi  # Maximum memory allowed
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
