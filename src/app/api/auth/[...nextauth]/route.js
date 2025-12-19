@@ -6,18 +6,10 @@ import connectDB from '@/lib/mongodb'
 import User from '@/models/User'
 
 export const authOptions = {
-  debug: process.env.NODE_ENV === 'development',
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code"
-        }
-      }
     }),
     CredentialsProvider({
       name: 'Credentials',
@@ -37,8 +29,6 @@ export const authOptions = {
           const user = await User.findOne({ email: credentials.email }).select('+password')
 
           console.log('=== AUTHENTICATION DEBUG ===')
-          console.log('Environment:', process.env.NODE_ENV)
-          console.log('NEXTAUTH_URL:', process.env.NEXTAUTH_URL)
           console.log('Searching for email:', credentials.email)
           console.log('User found:', !!user)
           if (user) {
@@ -78,35 +68,25 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      console.log('=== SIGNIN CALLBACK ===')
-      console.log('Provider:', account?.provider)
-      console.log('User email:', user?.email)
-      console.log('Environment:', process.env.NODE_ENV)
-      
-      if (account?.provider === 'google') {
+    async signIn({ user, account }) {
+      if (account.provider === 'google') {
         try {
           await connectDB()
-          console.log('MongoDB connected for Google sign in')
           
           const existingUser = await User.findOne({ email: user.email })
-          console.log('Existing user found:', !!existingUser)
           
           if (!existingUser) {
-            console.log('Creating new user from Google account')
             await User.create({
               name: user.name,
               email: user.email,
               image: user.image,
               googleId: account.providerAccountId,
             })
-            console.log('New user created successfully')
           }
           
           return true
         } catch (error) {
-          console.error('Error during Google sign in:', error)
-          console.error('Error stack:', error.stack)
+          console.error('Error during sign in:', error)
           return false
         }
       }
@@ -134,12 +114,30 @@ export const authOptions = {
   },
   cookies: {
     sessionToken: {
-      name: `next-auth.session-token`,
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production', // HTTPS required in production
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    callbackUrl: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.callback-url`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    csrfToken: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Host-' : ''}next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
       },
     },
   },
@@ -151,8 +149,8 @@ export const authOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60, // 24 hours
   },
+  useSecureCookies: process.env.NODE_ENV === 'production',
   secret: process.env.NEXTAUTH_SECRET,
-  // Critical for AWS Elastic Beanstalk with load balancer
   trustHost: true,
 }
 

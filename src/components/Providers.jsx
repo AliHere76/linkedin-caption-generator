@@ -1,5 +1,5 @@
 'use client'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { SessionProvider } from 'next-auth/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 
@@ -14,10 +14,10 @@ export default function Providers({ children }) {
   }))
 
   return (
-    <AuthProvider>
+    <SessionProvider>
       <QueryClientProvider client={queryClient}>
         {children}
       </QueryClientProvider>
-    </AuthProvider>
+    </SessionProvider>
   )
 }

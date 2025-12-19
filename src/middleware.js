@@ -1,14 +1,29 @@
+import { withAuth } from 'next-auth/middleware'
 import { NextResponse } from 'next/server'
 
-export function middleware(request) {
-  // Simply pass through - authentication is now handled via Authorization headers
-  return NextResponse.next()
-}
+export default withAuth(
+  function middleware(req) {
+    // Allow the request to continue
+    return NextResponse.next()
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        // Protect dashboard routes
+        if (req.nextUrl.pathname.startsWith('/dashboard')) {
+          return !!token
+        }
+        // Allow all other routes
+        return true
+      },
+    },
+  }
+)
 
-// Only run middleware on API routes that need protection
 export const config = {
   matcher: [
+    '/dashboard/:path*',
     '/api/captions/:path*',
     '/api/generate-caption/:path*',
-  ]
+  ],
 }

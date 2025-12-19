@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 8080",
     "lint": "next lint",
     "backend": "cd backend && npm run dev",
     "frontend": "npm run dev",
@@ -51,6 +51,7 @@
     "sharp": "^0.34.4",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
+    "zip": "^1.2.0",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

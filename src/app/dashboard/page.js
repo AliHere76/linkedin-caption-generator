@@ -1,5 +1,5 @@
 'use client'
-import { useAuth } from '@/contexts/AuthContext'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
@@ -48,7 +48,7 @@ const AnimatedText = ({ text }) => {
 }
 
 export default function Dashboard() {
-  const { user, loading: authLoading, logout } = useAuth()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -64,25 +64,20 @@ export default function Dashboard() {
   const fileInputRef = useRef(null)
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (status === 'unauthenticated') {
       router.push('/')
     }
-  }, [authLoading, user, router])
+  }, [status, router])
 
   useEffect(() => {
-    if (user) {
+    if (session) {
       fetchHistory()
     }
-  }, [user])
+  }, [session])
 
   const fetchHistory = async () => {
     try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/captions', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetch('/api/captions')
       const data = await response.json()
       if (response.ok) {
         setHistory(data.captions || [])
@@ -145,13 +140,9 @@ export default function Dashboard() {
         })
       }
 
-      const token = localStorage.getItem('token')
       const response = await fetch('/api/generate-caption', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           prompt: prompt.trim(),
           image: imageBase64
@@ -208,7 +199,7 @@ export default function Dashboard() {
     setShowAnimation(false) // No animation for history items
   }
 
-  if (authLoading) {
+  if (status === 'loading') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -216,7 +207,7 @@ export default function Dashboard() {
     )
   }
 
-  if (!user) {
+  if (!session) {
     return null
   }
 
@@ -238,7 +229,7 @@ export default function Dashboard() {
                 <div className="w-8 h-8 rounded-lg gradient-orange flex items-center justify-center">
                   <Sparkles className="h-4 w-4 text-white" />
                 </div>
-                <span className="font-semibold text-foreground">LinkedWizard</span>
+                <span className="font-semibold text-foreground">Linked Wizard</span>
               </div>
               <Button
                 variant="ghost"
@@ -298,20 +289,20 @@ export default function Dashboard() {
             <div className="p-4 border-t border-border/30 space-y-3 backdrop-blur-sm">
               <div className="flex items-center space-x-3 p-3 rounded-lg bg-secondary/30 transition-all duration-300 hover:bg-secondary/50">
                 <div className="w-10 h-10 rounded-full gradient-orange flex items-center justify-center text-white font-semibold">
-                  {user.name?.charAt(0).toUpperCase()}
+                  {session.user.name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">
-                    {user.name}
+                    {session.user.name}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {user.email}
+                    {session.user.email}
                   </p>
                 </div>
               </div>
               
               <Button
-                onClick={logout}
+                onClick={() => signOut({ callbackUrl: '/' })}
                 variant="outline"
                 className="w-full bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 hover:scale-[1.03] hover:shadow-lg hover:shadow-red-500/50 active:scale-[0.98] font-medium"
               >
@@ -337,7 +328,7 @@ export default function Dashboard() {
               <Menu className="h-5 w-5" />
             </Button>
             <div className="text-sm text-muted-foreground">
-              LinkedWizard - AI Caption Generator
+              Linked Wizard - AI Caption Generator
             </div>
             <div className="w-10"></div>
           </div>
@@ -370,7 +361,7 @@ export default function Dashboard() {
                   </motion.div>
                   
                   <h1 className="text-4xl md:text-5xl font-bold">
-                    Welcome, <span className="gradient-text">{user.name?.split(' ')[0]}</span>
+                    Welcome, <span className="gradient-text">{session.user.name?.split(' ')[0]}</span>
                   </h1>
                   <p className="text-lg text-muted-foreground">
                     Let&apos;s create something Magical ✨
